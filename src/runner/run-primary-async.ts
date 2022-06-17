@@ -216,12 +216,14 @@ export async function runPrimaryAsync(options: ConvertCommandCliArgs) {
     }
     await MigrationReporter.logReport(mergedReport, formatter);
 
-    console.log("Moving files with git...");
-    for (const path of mergedReport.migrationSuccessPaths) {
-      const target = path.replace(/\.jsx$/, ".tsx").replace(/\.js$/, ".ts");
-      await _maybeMoveWithGit(path, target);
+    logger.info("Moving files with git...");
+    for (const { filePath, hasJsx } of mergedReport.migrationSuccessItems) {
+      const target = filePath
+        .replace(/\.jsx$/, ".tsx")
+        .replace(/\.js$/, hasJsx ? ".tsx" : ".ts");
+      await _maybeMoveWithGit(filePath, target);
     }
-    console.log("Done!");
+    logger.complete("Done!");
 
     if (mergedReport.totals.error > 0) {
       logger.error(
@@ -250,10 +252,10 @@ async function _maybeMoveWithGit(from: string, to: string) {
     const relativeTo = to.slice(prefix.length);
     await git.mv(relativeFrom, relativeTo);
   } catch (error) {
-    console.error(
+    logger.warn(
       `Failed to move from ${from} to ${to}, will fall back to simple rename`
     );
-    console.log(error);
+    logger.warn(error);
     fs.renameSync(from, to);
   }
 }

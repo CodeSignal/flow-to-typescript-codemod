@@ -59,6 +59,11 @@ export interface MigrationReportItem extends t.SourceLocation {
   severity: MigrationReportItemSeverity;
 }
 
+export interface MigrationSuccessItem {
+  filePath: string;
+  hasJsx: boolean;
+}
+
 /**
  * Collects information during the migration and generates a report at the very end. We will have
  * a separate instance for each worker and we’ll merge them together at the end.
@@ -90,9 +95,9 @@ class MigrationReporter {
       ),
       lineCount,
       totals,
-      migrationSuccessPaths: Array.prototype.concat.call(
+      migrationSuccessItems: Array.prototype.concat.call(
         [],
-        ...reports.map(({ migrationSuccessPaths }) => migrationSuccessPaths)
+        ...reports.map(({ migrationSuccessItems }) => migrationSuccessItems)
       ),
     };
   }
@@ -109,7 +114,7 @@ class MigrationReporter {
 
   private readonly migrationReportItems: Array<MigrationReportItem> = [];
 
-  private readonly migrationSuccessPaths: Array<string> = [];
+  private readonly migrationSuccessItems: Array<MigrationSuccessItem> = [];
 
   private lineCount = 0;
 
@@ -265,8 +270,8 @@ class MigrationReporter {
     );
   }
 
-  success(filePath: string) {
-    this.migrationSuccessPaths.push(filePath);
+  success(filePath: string, hasJsx: boolean) {
+    this.migrationSuccessItems.push({ filePath, hasJsx });
   }
 
   unknownFlowType(filePath: string, location: t.SourceLocation) {
@@ -584,7 +589,7 @@ class MigrationReporter {
   generateReport(): MigrationReport {
     return {
       migrationReportItems: this.migrationReportItems,
-      migrationSuccessPaths: this.migrationSuccessPaths,
+      migrationSuccessItems: this.migrationSuccessItems,
       lineCount: this.lineCount,
       totals: this.totals,
     };
@@ -596,7 +601,7 @@ class MigrationReporter {
  */
 export type MigrationReport = {
   migrationReportItems: Array<MigrationReportItem>;
-  migrationSuccessPaths: Array<string>;
+  migrationSuccessItems: Array<MigrationSuccessItem>;
   lineCount: number;
   totals: Record<MigrationReportItemSeverity, number>;
 };
