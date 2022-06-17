@@ -14,5 +14,8 @@ src/test/test-files/*.tsx
 .DS_Store
 .vscode/
 *.tsbuildinfo
+.idea/
 
 coverage/
+
+CodeSignal

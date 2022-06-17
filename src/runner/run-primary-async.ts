@@ -2,6 +2,8 @@ import path from "path";
 import fs from "fs-extra";
 import os from "os";
 import cluster from "cluster";
+import simpleGit from "simple-git";
+
 import { ConvertCommandCliArgs } from "../cli/arguments";
 import { logger, interactiveLogger } from "./logger";
 import {
@@ -214,6 +216,13 @@ export async function runPrimaryAsync(options: ConvertCommandCliArgs) {
     }
     await MigrationReporter.logReport(mergedReport, formatter);
 
+    console.log("Moving files with git...");
+    for (const path of mergedReport.migrationSuccessPaths) {
+      const target = path.replace(/\.jsx$/, ".tsx").replace(/\.js$/, ".ts");
+      await _maybeMoveWithGit(path, target);
+    }
+    console.log("Done!");
+
     if (mergedReport.totals.error > 0) {
       logger.error(
         `Encountered ${mergedReport.totals.error} errors while processing ${mergedReport.lineCount} lines in ${flowFilePaths.length} files.`
@@ -230,5 +239,21 @@ export async function runPrimaryAsync(options: ConvertCommandCliArgs) {
         `Processed ${mergedReport.lineCount} lines in ${flowFilePaths.length} files.`
       );
     }
+  }
+}
+
+async function _maybeMoveWithGit(from: string, to: string) {
+  const git = simpleGit({ baseDir: path.join(process.cwd(), "CodeSignal") });
+  try {
+    const prefix = "CodeSignal/";
+    const relativeFrom = from.slice(prefix.length);
+    const relativeTo = to.slice(prefix.length);
+    await git.mv(relativeFrom, relativeTo);
+  } catch (error) {
+    console.error(
+      `Failed to move from ${from} to ${to}, will fall back to simple rename`
+    );
+    console.log(error);
+    fs.renameSync(from, to);
   }
 }

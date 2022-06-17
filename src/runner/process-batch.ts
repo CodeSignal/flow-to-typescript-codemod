@@ -4,6 +4,7 @@ import * as t from "@babel/types";
 import * as recast from "recast";
 import { Options } from "recast";
 import * as recastFlowParser from "recast/parsers/flow";
+
 import { runTransforms } from "./run-transforms";
 import MigrationReporter from "./migration-reporter";
 import { ConvertCommandCliArgs } from "../cli/arguments";
@@ -135,7 +136,8 @@ export async function processBatchAsync(
           }
         }
 
-        await fs.outputFile(tsFilePath, newFileText);
+        await fs.outputFile(targetFilePath, newFileText);
+        reporter.success(targetFilePath);
       } catch (error) {
         // Report errors, but don’t crash the worker...
         reporter.error(filePath, error);

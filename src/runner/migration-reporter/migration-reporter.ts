@@ -90,6 +90,10 @@ class MigrationReporter {
       ),
       lineCount,
       totals,
+      migrationSuccessPaths: Array.prototype.concat.call(
+        [],
+        ...reports.map(({ migrationSuccessPaths }) => migrationSuccessPaths)
+      ),
     };
   }
 
@@ -104,6 +108,8 @@ class MigrationReporter {
   }
 
   private readonly migrationReportItems: Array<MigrationReportItem> = [];
+
+  private readonly migrationSuccessPaths: Array<string> = [];
 
   private lineCount = 0;
 
@@ -257,6 +263,10 @@ class MigrationReporter {
       { start: { column: 0, line: 0 }, end: { column: 0, line: 0 } },
       message
     );
+  }
+
+  success(filePath: string) {
+    this.migrationSuccessPaths.push(filePath);
   }
 
   unknownFlowType(filePath: string, location: t.SourceLocation) {
@@ -574,6 +584,7 @@ class MigrationReporter {
   generateReport(): MigrationReport {
     return {
       migrationReportItems: this.migrationReportItems,
+      migrationSuccessPaths: this.migrationSuccessPaths,
       lineCount: this.lineCount,
       totals: this.totals,
     };
@@ -585,6 +596,7 @@ class MigrationReporter {
  */
 export type MigrationReport = {
   migrationReportItems: Array<MigrationReportItem>;
+  migrationSuccessPaths: Array<string>;
   lineCount: number;
   totals: Record<MigrationReportItemSeverity, number>;
 };
