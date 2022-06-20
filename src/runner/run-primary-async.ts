@@ -250,6 +250,10 @@ async function _maybeMoveWithGit(from: string, to: string) {
     const prefix = "CodeSignal/";
     const relativeFrom = from.slice(prefix.length);
     const relativeTo = to.slice(prefix.length);
+
+    _maybeRemoveFile(to);
+    await _maybeResolveConflicts(git, relativeFrom, relativeTo);
+
     await git.mv(relativeFrom, relativeTo);
   } catch (error) {
     logger.warn(
@@ -258,4 +262,24 @@ async function _maybeMoveWithGit(from: string, to: string) {
     logger.warn(error);
     fs.renameSync(from, to);
   }
+}
+
+function _maybeRemoveFile(path: string) {
+  try {
+    fs.removeSync(path);
+  } catch {}
+}
+
+async function _maybeResolveConflicts(
+  git: ReturnType<typeof simpleGit>,
+  source: string,
+  target: string
+) {
+  try {
+    await git.add(source);
+  } catch {}
+
+  try {
+    await git.rm(target);
+  } catch {}
 }
